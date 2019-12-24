@@ -23,11 +23,9 @@ pub fn get_openssl(_target: &str) -> (PathBuf, PathBuf) {
             artifacts.include_dir().to_path_buf(),
         )    
     }else{
-<<<<<<< HEAD
-        (PathBuf::new(""),PathBuf::new(""))
-=======
-        ("".to_path_buf(),"".to_path_buf)    
->>>>>>> 13c2216ce06985a537ad7ea5e6e381a68aebc396
+        (PathBuf::from(""),PathBuf::from(""))
+
+        
     }
     
 }
