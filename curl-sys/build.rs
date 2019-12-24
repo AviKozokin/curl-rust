@@ -8,6 +8,22 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[cfg(feature = "static-ssl")]
+pub fn get_openssl(_target: &str) -> (PathBuf, PathBuf) {
+    let artifacts = openssl_src::Build::new().build();
+    println!("cargo:vendored=1");
+    println!(
+        "cargo:root={}",
+        artifacts.lib_dir().parent().unwrap().display()
+    );
+
+    (
+        artifacts.lib_dir().to_path_buf(),
+        artifacts.include_dir().to_path_buf(),
+    )
+}
+
+
 fn main() {
     let target = env::var("TARGET").unwrap();
     let windows = target.contains("windows");
@@ -230,13 +246,42 @@ fn main() {
         }
     } else if cfg!(feature = "ssl") {
         if windows {
-            cfg.define("USE_WINDOWS_SSPI", None)
-                .define("USE_SCHANNEL", None)
-                .file("curl/lib/x509asn1.c")
-                .file("curl/lib/curl_sspi.c")
-                .file("curl/lib/socks_sspi.c")
-                .file("curl/lib/vtls/schannel.c")
-                .file("curl/lib/vtls/schannel_verify.c");
+            if !cfg!(feature = "static-ssl") {
+                cfg.define("USE_WINDOWS_SSPI", None)
+                    .define("USE_SCHANNEL", None)
+                    .file("curl/lib/x509asn1.c")
+                    .file("curl/lib/curl_sspi.c")
+                    .file("curl/lib/socks_sspi.c")
+                    .file("curl/lib/vtls/schannel.c")
+                    .file("curl/lib/vtls/schannel_verify.c");
+            } else {
+                use openssl_src;
+                
+                cfg.define("USE_OPENSSL", None)
+                    .file("curl/lib/vtls/openssl.c");
+
+                if let Some(path) = env::var_os("DEP_OPENSSL_INCLUDE") {
+                    cfg.include(path);
+                }
+                // get the built openssl include path and lib
+                let target = env::var("TARGET").unwrap();
+                let (lib_dir, include_dir) = get_openssl(&target);
+                if !Path::new(&lib_dir).exists() {
+                    panic!(
+                        "OpenSSL library directory does not exist: {}",
+                        lib_dir.to_string_lossy()
+                    );
+                }
+                if !Path::new(&include_dir).exists() {
+                    panic!(
+                        "OpenSSL include directory does not exist: {}",
+                        include_dir.to_string_lossy()
+                    );
+                }
+                println!("cargo:rustc-link-search={}", lib_dir.to_string_lossy());
+                println!("cargo:rustc-link-lib=static=libssl");
+                println!("cargo:rustc-link-lib=static=libcrypto");
+            }
         } else if target.contains("-apple-") {
             cfg.define("USE_SECTRANSP", None)
                 .file("curl/lib/vtls/sectransp.c");
