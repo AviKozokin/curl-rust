@@ -264,8 +264,6 @@ fn main() {
                     .file("curl/lib/vtls/schannel.c")
                     .file("curl/lib/vtls/schannel_verify.c");
             } else {
-                #[cfg(feature = "static-ssl")]
-                use openssl_src;
                 
                 cfg.define("USE_OPENSSL", None)
                     .file("curl/lib/vtls/openssl.c");
