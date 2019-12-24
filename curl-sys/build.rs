@@ -287,7 +287,7 @@ fn main() {
                     );
                 }
                 println!("cargo:rustc-link-search={}", lib_dir.to_string_lossy());
-                cfg.include(include_dir.into());
+                cfg.include(include_dir);
                 println!("cargo:rustc-link-lib=static=libssl");
                 println!("cargo:rustc-link-lib=static=libcrypto");
             }
