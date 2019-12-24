@@ -2,6 +2,8 @@ extern crate cc;
 extern crate pkg_config;
 #[cfg(target_env = "msvc")]
 extern crate vcpkg;
+#[cfg(feature="static-ssl")]
+extern crate openssl_src;
 
 use std::env;
 use std::fs;
