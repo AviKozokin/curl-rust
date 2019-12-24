@@ -8,19 +8,24 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[cfg(feature = "static-ssl")]
-pub fn get_openssl(_target: &str) -> (PathBuf, PathBuf) {
-    let artifacts = openssl_src::Build::new().build();
-    println!("cargo:vendored=1");
-    println!(
-        "cargo:root={}",
-        artifacts.lib_dir().parent().unwrap().display()
-    );
 
-    (
-        artifacts.lib_dir().to_path_buf(),
-        artifacts.include_dir().to_path_buf(),
-    )
+pub fn get_openssl(_target: &str) -> (PathBuf, PathBuf) {
+    if cfg!(feature = "static-ssl"){
+        let artifacts = openssl_src::Build::new().build();
+        println!("cargo:vendored=1");
+        println!(
+            "cargo:root={}",
+            artifacts.lib_dir().parent().unwrap().display()
+        );
+
+        (
+            artifacts.lib_dir().to_path_buf(),
+            artifacts.include_dir().to_path_buf(),
+        )    
+    }else{
+        (PathBuf::new(""),PathBuf::new(""))
+    }
+    
 }
 
 
@@ -255,6 +260,7 @@ fn main() {
                     .file("curl/lib/vtls/schannel.c")
                     .file("curl/lib/vtls/schannel_verify.c");
             } else {
+                #[cfg(feature = "static-ssl")]
                 use openssl_src;
                 
                 cfg.define("USE_OPENSSL", None)
