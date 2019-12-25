@@ -268,26 +268,17 @@ fn main() {
                 cfg.define("USE_OPENSSL", None)
                     .file("curl/lib/vtls/openssl.c");
 
-                if let Some(path) = env::var_os("DEP_OPENSSL_INCLUDE") {
+               if let Some(path) = env::var_os("DEP_OPENSSL_INCLUDE") {
                     cfg.include(path);
                 }
-                // get the built openssl include path and lib
-                let target = env::var("TARGET").unwrap();
-                let (lib_dir, include_dir) = get_openssl(&target);
+                let lib_dir = env::var_os("DEP_OPENSSL_LIB").unwrap();
                 if !Path::new(&lib_dir).exists() {
                     panic!(
                         "OpenSSL library directory does not exist: {}",
                         lib_dir.to_string_lossy()
                     );
                 }
-                if !Path::new(&include_dir).exists() {
-                    panic!(
-                        "OpenSSL include directory does not exist: {}",
-                        include_dir.to_string_lossy()
-                    );
-                }
                 println!("cargo:rustc-link-search={}", lib_dir.to_string_lossy());
-                cfg.include(include_dir);
                 println!("cargo:rustc-link-lib=static=libssl");
                 println!("cargo:rustc-link-lib=static=libcrypto");
             }
